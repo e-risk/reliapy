@@ -24,24 +24,12 @@ tangent space centered at a given point on the Grassmann manifold can be perform
 * DiffusionMaps: In this class the diffusion maps create a connection between the spectral properties of the diffusion
                  process and the intrinsic geometry of the data resulting in a multiscale representation of the data.
 """
-
-from UQpy.Surrogates import Krig
-from Utilities import *
 import scipy as sp
 import numpy as np
-import itertools
-from scipy.interpolate import LinearNDInterpolator
-from os import path
-import math
-
-import scipy.sparse as sps
-import scipy.sparse.linalg as spsl
-import scipy.spatial.distance as sd
-
 
 ########################################################################################################################
 ########################################################################################################################
-#                                            Grassmann Manifold                                                        #
+#                                            Monte Carlo Simulation                                                    #
 ########################################################################################################################
 ########################################################################################################################
 
@@ -87,68 +75,12 @@ class MonteCarlo:
     Last modified: 03/26/20 by Ketson R. M. dos Santos
     """
 
-    def __init__(self, distance_object=None, distance_script=None, kernel_object=None, kernel_script=None,
-                 interp_object=None,
-                 interp_script=None, karcher_object=None, karcher_script=None):
+    def __init__(self, object=None):
 
-        # Distance.
-        self.distance_script = distance_script
-        self.distance_object = distance_object
-        if distance_script is not None:
-            self.user_distance_check = path.exists(distance_script)
-        else:
-            self.user_distance_check = False
-
-        if self.user_distance_check:
-            try:
-                self.module_dist = __import__(self.distance_script[:-3])
-            except ImportError:
-                raise ImportError('There is no module implementing a distance.')
-
-        # Kernels.
-        self.kernel_script = kernel_script
-        self.kernel_object = kernel_object
-        if kernel_script is not None:
-            self.user_kernel_check = path.exists(kernel_script)
-        else:
-            self.user_kernel_check = False
-
-        if self.user_kernel_check:
-            try:
-                self.module_kernel = __import__(self.kernel_script[:-3])
-            except ImportError:
-                raise ImportError('There is no module implementing a Grassmann kernel.')
-
-        # Interpolation.
-        self.interp_script = interp_script
-        self.interp_object = interp_object
-        if interp_script is not None:
-            self.user_interp_check = path.exists(interp_script)
-        else:
-            self.user_interp_check = False
-
-        if self.user_interp_check:
-            try:
-                self.module_interp = __import__(self.interp_script[:-3])
-            except ImportError:
-                raise ImportError('There is no module implementing the interpolation.')
-
-        # Karcher mean.
-        self.karcher_script = karcher_script
-        self.karcher_object = karcher_object
-        if karcher_script is not None:
-            self.user_karcher_check = path.exists(karcher_script)
-        else:
-            self.user_karcher_check = False
-
-        if self.user_karcher_check:
-            try:
-                self.module_karcher = __import__(self.karcher_script[:-3])
-            except ImportError:
-                raise ImportError('There is no module implementing an optimizer to find the Karcher mean.')
-
+        self.object = distance_object
+        
     # Calculate the distance on the manifold
-    def distance(self, *argv, **kwargs):
+    def MCS(self, nsim=10):
 
         """
         Estimate the distance of points on the Grassmann manifold.
@@ -171,93 +103,9 @@ class MonteCarlo:
         :type distance_list: list
         """
 
-        nargs = len(argv[0])
-        psi = argv[0]
+        
 
-        if 'rank' in kwargs.keys():
-            ranks = kwargs['rank']
-        else:
-            ranks = None
-
-        # Initial tests
-        #-----------------------------------------------------------
-        if ranks is None:
-            ranks = []
-            for i in range(nargs):
-                ranks.append(np.linalg.matrix_rank(psi[i]))
-        elif type(ranks) != list and type(ranks) != np.ndarray:
-            raise TypeError('rank MUST be either a list or ndarray.')
-            
-        if nargs < 2:
-            raise ValueError('Two matrices or more MUST be provided.')
-        elif len(ranks) != nargs:
-            raise ValueError('The number of elements in rank and in the input data MUST be the same.')
-        #------------------------------------------------------------
-            
-        # Define the pairs of points to compute the Grassmann distance.
-        indices = range(nargs)
-        pairs = list(itertools.combinations(indices, 2))
-
-        if self.user_distance_check:
-            if self.distance_script is None:
-                raise TypeError('distance_script cannot be None')
-
-            exec('from ' + self.distance_script[:-3] + ' import ' + self.distance_object)
-            distance_fun = eval(self.distance_object)
-        else:
-            if self.distance_object is None:
-                raise TypeError('distance_object cannot be None')
-
-            distance_fun = eval("Grassmann." + self.distance_object)
-
-        distance_list = []
-        for id_pair in range(np.shape(pairs)[0]):
-            ii = pairs[id_pair][0]  # Point i
-            jj = pairs[id_pair][1]  # Point j
-
-            rank0 = int(ranks[ii])
-            rank1 = int(ranks[jj])
-
-            x0 = np.asarray(psi[ii])[:, :rank0]
-            x1 = np.asarray(psi[jj])[:, :rank1]
-
-            dist = distance_fun(x0, x1)
-
-            distance_list.append(dist)
-
-        return distance_list
+        return nsim
 
     # ==================================================================================================================
-    # Built-in metrics are implemented in this section. Any new built-in metric must be implemented
-    # here with the decorator @staticmethod.
-
-    @staticmethod
-    def grassmann_distance(x0, x1):
-
-        """
-        Estimate the Grassmann distance.
-        One of the distances defined on a manifold is the Grassmann distance implemented herein. As the user gives the
-        distance definition when the class Grassmann is instantiated the method 'distance' uses this information to call
-        the respective distance definition.
-        **Input:**
-        :param x0: Point on the Grassmann manifold.
-        :type  x0: list or numpy array
-        :param x1: Point on the Grassmann manifold.
-        :type  x1: list or numpy array
-        **Output/Returns:**
-        :param distance: Grassmann distance between x0 and x1.
-        :type distance: float
-        """
-
-        l = min(np.shape(x0))
-        k = min(np.shape(x1))
-        rank = min(l, k)
-
-        r = np.dot(x0.T, x1)
-        (ui, si, vi) = svd(r, rank)
-        index = np.where(si > 1)
-        si[index] = 1.0
-        theta = np.arccos(si)
-        distance = np.sqrt(abs(k - l) * np.pi ** 2 / 4 + np.sum(theta ** 2))
-
-        return distance
+   

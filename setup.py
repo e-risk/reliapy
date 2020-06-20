@@ -8,7 +8,7 @@ setup(
     url='https://github.com/e-risk/reliapy',
     description="UQpy is a general purpose toolbox for Uncertainty Quantification",
     author="Ketson R. M. dos Santos",
-    author_email="reliapy.py@@gmail.com",
+    author_email="reliapy.py@gmail.com",
     license='MIT',
     platforms=["OSX", "Windows", "Linux"],
     packages=find_packages("src"),

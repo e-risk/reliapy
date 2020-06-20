@@ -1,4 +1,4 @@
 
-import reliapy.MonteCarlo
+import reliapy.Model
 
-from reliapy.MonteCarlo import *
+from reliapy.Model import *

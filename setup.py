@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='reliapy',
-    version="0.1.0",
+    version='0.1',
     url='https://github.com/e-risk/reliapy',
     description="UQpy is a general purpose toolbox for Uncertainty Quantification",
     author="Ketson R. M. dos Santos",

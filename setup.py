@@ -3,7 +3,7 @@
 from distutils.core import setup
 setup(
   name = 'reliapy',         # How you named your package folder (MyLib)
-  packages = ['reliapy'],   # Chose the same as "name"
+  packages = ['src'],   # Chose the same as "name"
   version = '0.1.0',      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'Reliapy is a python toolbox focused in the risk and reliability analysis of engineering systems',   # Give a short description about your library

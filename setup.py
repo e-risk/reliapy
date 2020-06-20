@@ -6,7 +6,7 @@ setup(
     name='reliapy',
     version='0.1',
     url='https://github.com/e-risk/reliapy',
-    description="UQpy is a general purpose toolbox for Uncertainty Quantification",
+    description="Reliapy is a python toolbox focused in the risk and reliability analysis of engineering systems",
     author="Ketson R. M. dos Santos",
     author_email="reliapy.py@gmail.com",
     license='MIT',

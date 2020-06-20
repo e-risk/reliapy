@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='reliapy',
-    version='0.1',
+    version='0.1.0',
     url='https://github.com/e-risk/reliapy',
     description="Reliapy is a python toolbox focused in the risk and reliability analysis of engineering systems",
     author="Ketson R. M. dos Santos",

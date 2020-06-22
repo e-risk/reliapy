@@ -42,6 +42,8 @@ class MonteCarlo:
         
     # Calculate the distance on the manifold
     def MCS(self, nsim=10):
+      
+      print(nsim)
 
         return nsim
 

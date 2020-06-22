@@ -42,9 +42,14 @@ class MonteCarlo:
         
     # Calculate the distance on the manifold
     def MCS(self, nsim=10):
+<<<<<<< HEAD
       
       print(nsim)
 
+=======
+        print('Not implemented!')
+        
+>>>>>>> master
         return nsim
 
     # ==================================================================================================================

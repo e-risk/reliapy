@@ -15,46 +15,125 @@
 # COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+"""
+``Model`` is the module for ``reliapy`` used to run the state limit equation. It is also an interface with external 
+programs.
+
+This module contains the classes and methods necessary to compute the value of the state limit equation. Further, 
+it also serve as the interface between ``reliapy`` and external programs (e.g., FE codes).
+
+The module currently contains the following classes:
+* ``StateLimit``: Class used to compute the state limit euqation g(X).
+"""
+
 import numpy as np
 
 
 class StateLimit:
+    """
+    Use this class to call the state limit equation.
 
-    def __init__(self, state_limit_function=None, system=False, num_sle=1):
+    The class ``StateLimit`` is used to manage the execution of the state limit equation considering that
+    it can be passed by the user as a callable object and can be used as an interface to an external code,
+    such as FE programs. 
 
-        if callable(state_limit_function):
-            self.state_limit_function = state_limit_function
+    **Input:**
+    * **state_limit** (`callable`)
+        Callable object containing the state limit functions.
+        
+    * **system** (`bool`)
+        Boolean variable  if True the output will also show the value of each state limit equation composing
+        the system.
+
+    **Attributes:**
+    * **g** (`list`)
+        Value(s) of the state limit equation(s) (equations if a system is considered).
+
+    **Methods:**
+    """
+
+    def __init__(self, state_limit=None, state_limit_grad=None):
+
+        if callable(state_limit):
+            self.state_limit = state_limit
         else:
-            raise TypeError('reliapy: state_limit_equations must be callable.')
+            raise TypeError('RELIAPY: state_limit must be callable.')
 
-        self.system = system
-        self.num_sle = num_sle
         self.g = []
 
     def run(self, samples=None):
+        
+        """
+        Compute the value of the state limit equation(s).
+        
+        The method ``run`` will receive the samples as input variables. The samples are stored in a list and this list
+        can be composed by samples of a random variables or a random process. The user is totally responsible for the 
+        shape of the input variables. Moreover, the state limit equations are send to the module as a callable object
+        programmed by the user externally.
+
+        **Input:**
+        * **samples** (`list`)
+            Samples passed by the user to the state limit equation.
+        
+        **Output/Returns:**
+        
+        * **g** (`list`)
+            Value(s) of the state limit equation(s) (equations if a system is considered).
+        """
 
         # Check if samples are provided
         if samples is None:
-            raise ValueError('reliapy: Samples must be provided as input.')
+            raise ValueError('RELIAPY: Samples must be provided as input.')
         elif isinstance(samples, list):
             nsim = len(samples)  # This assumes that the number of rows is the number of simulations.
         else:
-            raise ValueError('reliapy: Samples must be passed as a list')
+            raise ValueError('RELIAPY: Samples must be passed as a list')
 
         # Run python model
         g = []
         for i in range(nsim):
 
-            state_lim = self.state_limit_function(samples[i])
-
-            if self.system:
-                # state_lim is a list [g_total, g0, g1, g2,...]
-                if len(state_lim) != self.num_sle:
-                    raise ValueError('reliapy: num_sle is not consistent with the number of State Limit Equations.')
-
-                if not isinstance(state_lim, list):
-                    raise TypeError('reliapy: The output of the state limit must be a list')
+            state_lim = self.state_limit(samples[i])
 
             g.append(state_lim)
 
         return g
+    
+    
+    def drun(self, samples=None):
+        
+        """
+        Compute the gradient of the state limit equation(s).
+        
+        The method ``drun`` will receive the samples as input variables to compute the gradient of the state limit
+        equation. The samples are stored in a list and this list can be composed by samples of a random variables 
+        or a random process. The user is totally responsible for the shape of the input variables. Moreover, the 
+        state limit equations are send to the module as a callable object programmed by the user externally.
+
+        **Input:**
+        * **samples** (`list`)
+            Samples passed by the user to the state limit equation.
+        
+        **Output/Returns:**
+        
+        * **g** (`list`)
+            Value(s) of the state limit equation(s) (equations if a system is considered).
+        """
+
+        # Check if samples are provided
+        if samples is None:
+            raise ValueError('RELIAPY: Samples must be provided as input.')
+        elif isinstance(samples, list):
+            nsim = len(samples)  # This assumes that the number of rows is the number of simulations.
+        else:
+            raise ValueError('RELIAPY: Samples must be passed as a list')
+
+        # Run python model
+        dg = []
+        for i in range(nsim):
+
+            state_lim_grad = self.state_limit_grad(samples[i])
+
+            dg.append(state_lim_grad)
+
+        return dg
